@@ -1,0 +1,71 @@
+{
+  "order_number": "PL-000003",
+  "source_system": "Acumatica",
+  "source_system_processed_at": "2022-09-07T00:00:00+00:00",
+  "origin_address": {
+    "name": "Ace Hardware",
+    "company": "Ace Hardware",
+    "street1": "",
+    "street2": null,
+    "city": "",
+    "state": "",
+    "zip": "",
+    "country": "US",
+    "phone_number": "",
+    "email": "test@mail.com",
+    "is_residential": false
+  },
+  "destination_address": {
+    "name": "Ace Hardware",
+    "company": "Ace Hardware",
+    "street1": "",
+    "street2": "",
+    "city": "",
+    "state": "CA",
+    "zip": "93101",
+    "country": "US",
+    "phone_number": "",
+    "email": "test@mail.com",
+    "is_residential": false,
+    "is_po_box": false
+  },
+  "reference_numbers": [
+    {
+      "code": "other_id",
+      "value": "9/7/2022 12:00:00 AM",
+      "name": "OrderDate"
+    }
+  ],
+  "total_price": 0,
+  "shipping_price": 0,
+  "tax_price": 0,
+  "items_price": 0,
+  "order_line_items": [
+    {
+      "name": "Duluth Forge 18 Inch Ceramic Charcoal Kamado Grill With Table - Brown Spice - Model# DK-18T-BS",
+      "sku": "140066",
+      "upc": null,
+      "quantity": 1,
+      "value": 0,
+      "length": 10,
+      "width": 10,
+      "height": 10,
+      "weight": 10,
+      "item_type": "unpacked",
+      "line_number": 1,
+      "warehouse_code": "california_warehouse",
+      "origin_address": null,
+      "error_message": null,
+      "reference_numbers": [
+        {
+          "code": "other_id",
+          "value": "9/7/2022 12:00:00 AM",
+          "name": "OrderDate"
+        }
+      ]
+    }
+  ],
+  "status": "new",
+  "created_at": "2022-11-28T22:26:22+00:00",
+  "updated_at": "2022-11-28T22:26:22+00:00"
+}

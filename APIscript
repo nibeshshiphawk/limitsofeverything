@@ -1,0 +1,200 @@
+import requests
+import json
+import math
+import copy
+import time
+
+# ShipHawk API test program (written in version 3.7.3 of Python)
+# Copyright (c) 2022 ShipHawk, HawkApplications Corp
+# Nibesh Moktan
+# Revision 1.0
+#
+# History
+# Who   When            Version What
+# NM    2019.05.06      1.0b0   First version
+
+#set url for different environments based on user input
+
+def set_url(environment):
+
+    if (environment.upper() == 'S'):
+        return 'https://sandbox.shiphawk.com/api/v4'
+    elif (environment.upper() == 'U'):
+        return 'https://uat.shiphawk.com/api/v4'
+    elif (environment.upper() == 'P'):
+        return 'https://shiphawk.com/api/v4'
+    elif (environment.upper() == 'L'):
+        return 'http://localhost:3000/api/v4'
+    else:
+        print("Invalid Input")
+    exit()
+
+# User Inputs destination info
+
+#destination_environment = input("\nEnter destination environment:\n'S' for SandBox, 'U' for UAT, 'P' for Production, or 'L' for Local:")
+# destination_api_key = input ("\nEnter corresponding destination API key:")
+destination_api_key = "78a6dc624a5b0ac5e52b7844b508627d"
+#destination_url = set_url(destination_environment)
+destination_url = set_url("p")
+
+# Setting source and destination headers
+
+# source_headers = {'X-Api-Key': source_api_key}
+destination_headers = {'X-Api-Key': destination_api_key, 'Content-Type': "application/json"}
+
+
+#########################################################################################################
+
+
+def import_json_file ():
+    file = open('order_request.json')
+    file = file.read()
+    return json.loads(file)
+
+    
+def send_order_to_shiphawk(order_data, generate_ps):
+    
+    response = requests.post(url=destination_url + '/orders', headers=destination_headers, data=order_data)
+    print("\nTime elapsed = " + str(response.elapsed.total_seconds()))
+    
+    if (generate_ps == True):
+        print ("\nGenerating Proposed Shipment..")
+        r = requests.post(url=destination_url + '/orders' + json.loads(response.text)["id"] + 'proposed_shipments/generate', headers=destination_headers)
+        print("\nProposed Shipment generated in " + str(r.elapsed.total_seconds()) + "seconds")
+    
+    return response
+
+def clear_order_from_shiphawk(order_id):
+#   time.sleep(10)
+    r = requests.delete(url=destination_url + '/orders/' + order_id, headers=destination_headers)
+    print (r.status_code)
+    if (r.status_code == 204):
+        print ("Order " + order_id + " deleted successfully")
+    print (r.text)
+
+def test_max_line_items(generate_ps):
+#   imported data converted to json (required to read and loop through)
+    original_json_data = import_json_file()
+    
+    # get the original order line item data
+    for oli_data in original_json_data["order_line_items"]:
+        new_oli_data = copy.deepcopy(oli_data) #copying without reference to preserve the original line item data
+    
+    y=0
+    while y<6:
+        order_data = copy.deepcopy(original_json_data)
+        for i in range(y*100): order_data["order_line_items"].append(dict(new_oli_data)) #appending a new oli
+    
+        number_of_line_items = len(order_data["order_line_items"])
+        
+        test_json_data = json.dumps(order_data)
+        #print (test_json_data)
+        
+        #Calling funciton to send the order to ShipHawk
+        response = send_order_to_shiphawk(test_json_data, generate_ps)
+        order_id = json.loads(response.text)["id"]
+        print ("\nOrder " + order_id + " created successfully with " + str(number_of_line_items) + " line items")
+        
+        #Calling function to clear the newly created order
+        clear_order_from_shiphawk(order_id)
+        
+        y=y+1
+
+def test_max_line_item_quantity():
+#   imported data converted to json (required to read and loop through)
+    order_data = import_json_file()
+    line_item_multiple = 1000000000
+    y=1
+    while y<=3:
+        
+        for oli_data in order_data["order_line_items"]:
+            oli_data["quantity"] = y*line_item_multiple
+        
+        test_json_data = json.dumps(order_data)
+        #print (test_json_data)
+        
+        #Calling funciton to send the order to ShipHawk
+        response = send_order_to_shiphawk(test_json_data)
+        order_id = json.loads(response.text)["id"]
+        print ("\nOrder " + order_id + " created successfully with single line item quantity: " + str(y*line_item_multiple))
+        
+        #Calling function to clear the newly created order
+        clear_order_from_shiphawk(order_id)
+        
+        y=y+1
+
+def test_max_order_references():
+#   imported data converted to json (required to read and loop through)
+    original_json_data = import_json_file()
+    
+    # get the original order reference data
+    for order_reference_data in original_json_data["reference_numbers"]:
+        new_order_reference_data = copy.deepcopy(order_reference_data) #copying without array reference to preserve the original order reference data
+    
+    y=0
+    while y<10:
+        order_data = copy.deepcopy(original_json_data)
+        for i in range(y*100): order_data["reference_numbers"].append(dict(new_order_reference_data)) #appending a new order reference
+    
+        number_of_references = len(order_data["reference_numbers"])
+        
+        test_json_data = json.dumps(order_data, indent=5)
+        print (test_json_data)
+        
+        #Calling funciton to send the order to ShipHawk
+        response = send_order_to_shiphawk(test_json_data)
+        order_id = json.loads(response.text)["id"]
+        print (order_id)
+        print ("\nOrder " + order_id + " created successfully with " + str(number_of_references) + " order references")
+        
+        #Calling function to clear the newly created order
+        clear_order_from_shiphawk(order_id)
+        print ("Order " + order_id + " deleted successfully")
+        
+        y=y+1
+
+def test_max_order_line_item_references():
+#   imported data converted to json (required to read and loop through)
+    original_json_data = import_json_file()
+    
+    #get the original order line item reference data
+    for oli_data in original_json_data["order_line_items"]:
+        for oli_reference_data in oli_data["reference_numbers"]:
+            new_oli_reference_data = copy.deepcopy(oli_reference_data) #copying without array reference to preserve the original order reference data
+
+    
+    y=0
+    while y<10:
+        order_data = copy.deepcopy(original_json_data)
+        
+        
+        for oli_data in order_data["order_line_items"]:
+                for i in range(y*100): oli_data["reference_numbers"].append(dict(new_oli_reference_data)) #appending a new oli reference
+    
+        
+       # number_of_references = len(order_data["reference_numbers"])
+        
+        test_json_data = json.dumps(order_data, indent=5)
+        print (test_json_data)
+        
+        #Calling funciton to send the order to ShipHawk
+        order_id = send_order_to_shiphawk(test_json_data)
+        print ("\nOrder " + order_id + " created successfully with " + str(y*100) + " order line item references")
+        
+        #Calling function to clear the newly created order
+        clear_order_from_shiphawk(order_id)
+        print ("Order " + order_id + " deleted successfully")
+        
+        y=y+1
+
+def main_function():
+#   test_max_line_items (False) # without ps generation
+    test_max_line_items (True)  # with ps generation
+#   test_max_line_item_quantity ()
+#   test_max_order_references ()
+#   test_max_order_line_item_references ()
+    
+
+    
+
+main_function ()
